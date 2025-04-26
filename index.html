@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-4">
+    <div id="game-board" class="grid grid-cols-4 gap-4"></div>
+    <div id="score" class="mt-4 text-xl font-bold">Score: 0</div>
+  </div>
+
+  <script>
+    const cards = ['😘', '😍', '😋', '😉', '🤭', '🥵', '👅', '👉👌'];
+    let flippedCards = [];
+    let matches = 0;
+    let checkingMatch = false; // New variable to track match checking state
+
+    function createGame() {
+      const shuffledCards = [...cards, ...cards].sort(() => Math.random() - 0.5);
+      const gameBoard = document.getElementById('game-board');
+      
+      shuffledCards.forEach((emoji, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-8 text-center text-4xl cursor-pointer rounded-lg shadow-lg hover:bg-blue-100';
+        card.dataset.value = emoji;
+        card.dataset.index = index;
+        card.textContent = '❓';
+        card.addEventListener('click', flipCard);
+        gameBoard.appendChild(card);
+      });
+    }
+
+    function flipCard(e) {
+      const card = e.target;
+
+      // Prevent flipping the same card again or if a match check is in progress
+      if (flippedCards.includes(card) || card.style.display === 'none' || checkingMatch) return;
+
+      card.textContent = card.dataset.value;
+      flippedCards.push(card);
+      
+      if (flippedCards.length === 2) {
+        checkingMatch = true; // Set the flag to true
+        // Delay the match check to allow the second card to be visible
+        setTimeout(checkMatch, 500);
+      }
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flippedCards;
+      if (card1.dataset.value === card2.dataset.value) {
+        matches++;
+        // Hide matched cards
+        card1.style.display = 'none';
+        card2.style.display = 'none';
+        document.getElementById('score').textContent = `Score: ${matches}`;
+      } else {
+        setTimeout(() => {
+          card1.textContent = '❓';
+          card2.textContent = '❓';
+        }, 1000);
+      }
+      flippedCards = [];
+      checkingMatch = false; // Reset the flag after checking
+    }
+
+    createGame();
+  </script>
+</body>
+</html>
