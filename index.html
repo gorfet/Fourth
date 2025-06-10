@@ -1,70 +1,1641 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Tower Maze</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: white;
+            touch-action: manipulation;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #menu-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(rgba(15, 23, 42, 0.95), rgba(30, 24, 16, 0.95)), 
+                        url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23382a1e' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 0h20v20H0V0zm10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm20 0a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM10 37a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm10-17h20v20H20V20zm10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14z'/%3E%3C/g%3E%3C/svg%3E");
+            z-index: 300;
+        }
+        
+        #credits-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 400;
+        }
+        
+        .menu-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.8), 0 0 20px rgba(245, 158, 11, 0.6);
+            letter-spacing: 3px;
+        }
+        
+        .menu-subtitle {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            max-width: 80%;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .menu-btn {
+            background-color: #b45309;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 2px solid #92400e;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .menu-btn:hover {
+            background-color: #92400e;
+            transform: translateY(-2px);
+        }
+        
+        .menu-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .credits-content {
+            background: rgba(30, 24, 16, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            border: 2px solid #4a3828;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .credits-title {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #f59e0b;
+        }
+        
+        .credits-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 2rem;
+        }
+        
+        .credits-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .credits-section h3 {
+            color: #f59e0b;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .credits-list {
+            padding-left: 1.5rem;
+        }
+        
+        .credits-list li {
+            margin-bottom: 0.5rem;
+        }
+        
+        #maze-container {
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #1e1810;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            margin-top: 10px;
+        }
+        
+        #maze {
+            position: relative;
+            display: grid;
+        }
+        
+        .cell {
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .wall {
+            background-color: #2d2016;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23382a1e' fill-opacity='0.7' fill-rule='evenodd'%3E%3Cpath d='M0 0h20v20H0V0zm10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm20 0a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM10 37a7 7 0 1 0 0-14 7 7 0 0 0 0 14zm10-17h20v20H20V20zm10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14z'/%3E%3C/g%3E%3C/svg%3E");
+            border: 1px solid #1e1810;
+        }
+        
+        .path {
+            background-color: #1e1810;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23352920' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .stairs-up {
+            background-color: #4a3828;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23352920' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .stairs-down {
+            background-color: #352920;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%234a3828' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .trap {
+            background-color: #1e1810;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23352920' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/svg%3E");
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .spike-trap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spike-trap::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23a55' d='M50 0 L60 30 L90 40 L60 50 L50 80 L40 50 L10 40 L40 30 Z'/%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.8;
+        }
+        
+        .pit-trap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pit-trap::before {
+            content: '';
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(30,24,16,0) 70%);
+            border-radius: 50%;
+        }
+        
+        .player {
+            position: absolute;
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            z-index: 10;
+            transition: transform 0.2s ease;
+        }
+        
+        .player-sprite {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        
+        .player-body {
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            top: 20%;
+            left: 20%;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+        }
+        
+        .player-eye {
+            position: absolute;
+            width: 20%;
+            height: 20%;
+            background-color: white;
+            border-radius: 50%;
+            top: 30%;
+        }
+        
+        .player-eye-left {
+            left: 25%;
+        }
+        
+        .player-eye-right {
+            left: 55%;
+        }
+        
+        .player-pupil {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            background-color: #0f172a;
+            border-radius: 50%;
+            top: 25%;
+            left: 25%;
+        }
+        
+        .player-leg {
+            position: absolute;
+            width: 15%;
+            height: 30%;
+            background-color: #d97706;
+            border-radius: 5px;
+            top: 70%;
+        }
+        
+        .player-leg-left {
+            left: 30%;
+        }
+        
+        .player-leg-right {
+            left: 55%;
+        }
+        
+        @keyframes walk-left {
+            0%, 100% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+        }
+        
+        @keyframes walk-right {
+            0%, 100% { transform: rotate(15deg); }
+            50% { transform: rotate(-15deg); }
+        }
+        
+        .walking-up .player-leg-left {
+            animation: walk-left 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-up .player-leg-right {
+            animation: walk-right 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-down .player-leg-left {
+            animation: walk-left 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-down .player-leg-right {
+            animation: walk-right 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-left .player-leg-left {
+            animation: walk-left 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-left .player-leg-right {
+            animation: walk-right 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-right .player-leg-left {
+            animation: walk-left 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .walking-right .player-leg-right {
+            animation: walk-right 0.3s infinite;
+            transform-origin: top center;
+        }
+        
+        .fog {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 5;
+            transition: opacity 0.3s ease;
+        }
+        
+        .visited {
+            opacity: 0.7;
+        }
+        
+        .visible {
+            opacity: 0;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+            z-index: 100;
+        }
+        
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            user-select: none;
+        }
+        
+        .control-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background-color: rgba(30, 24, 16, 0.7);
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid #4a3828;
+            font-size: 14px;
+        }
+        
+        #floor-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background-color: rgba(30, 24, 16, 0.7);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #4a3828;
+        }
+        
+        #minimap {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(30, 24, 16, 0.7);
+            border: 2px solid #4a3828;
+            border-radius: 5px;
+            padding: 5px;
+            z-index: 100;
+        }
+        
+        .minimap-cell {
+            width: 4px;
+            height: 4px;
+            display: inline-block;
+        }
+        
+        .minimap-wall {
+            background-color: #2d2016;
+        }
+        
+        .minimap-path {
+            background-color: #1e1810;
+        }
+        
+        .minimap-stairs-up {
+            background-color: #4a3828;
+        }
+        
+        .minimap-stairs-down {
+            background-color: #352920;
+        }
+        
+        .minimap-trap {
+            background-color: #7f1d1d;
+        }
+        
+        .minimap-player {
+            background-color: #f59e0b;
+        }
+        
+        .minimap-unseen {
+            background-color: #000000;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .btn {
+            background-color: #b45309;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            margin-top: 20px;
+            border: 1px solid #92400e;
+        }
+        
+        .btn:hover {
+            background-color: #92400e;
+        }
+        
+        #message {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(30, 24, 16, 0.9);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 100;
+            border: 1px solid #4a3828;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .show-message {
+            opacity: 1 !important;
+        }
+        
+        .damage-flash {
+            animation: damage-flash 0.5s;
+        }
+        
+        @keyframes damage-flash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(220, 38, 38, 0.5); }
+        }
+        
+        .torch {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, rgba(251,191,36,0.7) 0%, rgba(251,191,36,0) 70%);
+            border-radius: 50%;
+            filter: blur(2px);
+            z-index: 4;
+        }
+        
+        .torch::before {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #fbbf24;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.1); }
+            100% { opacity: 0.7; transform: scale(1); }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .menu-title {
+                font-size: 2.5rem;
+            }
+            
+            .menu-subtitle {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
+            
+            .menu-btn {
+                padding: 12px 20px;
+                font-size: 1.1rem;
+            }
+            
+            #controls {
+                grid-template-columns: repeat(3, 70px);
+                grid-template-rows: repeat(3, 70px);
+                gap: 8px;
+            }
+            
+            .control-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 28px;
+            }
+            
+            #hud {
+                top: 5px;
+                left: 5px;
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            #floor-indicator {
+                top: 5px;
+                right: 5px;
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            #minimap {
+                bottom: 5px;
+                right: 5px;
+                padding: 3px;
+            }
+            
+            #message {
+                bottom: 120px;
+                font-size: 14px;
+            }
+            
+            .credits-content {
+                padding: 20px;
+            }
+            
+            .credits-title {
+                font-size: 1.8rem;
+            }
+            
+            .credits-text {
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .menu-title {
+                font-size: 2rem;
+            }
+            
+            .menu-btn {
+                padding: 10px 18px;
+                font-size: 1rem;
+            }
+            
+            #controls {
+                grid-template-columns: repeat(3, 60px);
+                grid-template-rows: repeat(3, 60px);
+                gap: 6px;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+            
+            #minimap {
+                transform: scale(0.8);
+                transform-origin: bottom right;
+                bottom: 5px;
+                right: 5px;
+            }
+            
+            #message {
+                bottom: 100px;
+                font-size: 13px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-  <div class="container mx-auto p-4">
-    <div id="game-board" class="grid grid-cols-4 gap-4"></div>
-    <div id="score" class="mt-4 text-xl font-bold">Score: 0</div>
-  </div>
+<body>
+    <div id="game-container">
+        <!-- Menu Screen -->
+        <div id="menu-screen">
+            <h1 class="menu-title">LABYRINTH</h1>
+            <p class="menu-subtitle">Navigate treacherous towers, avoid deadly traps, and climb as high as you can! Use the controls to move and find stairs to ascend to higher, more dangerous floors.</p>
+            <div class="menu-buttons">
+                <div class="menu-btn" id="start-btn">START GAME</div>
+                <div class="menu-btn" id="credits-btn">CREDITS</div>
+            </div>
+        </div>
+        
+        <!-- Credits Screen -->
+        <div id="credits-screen">
+            <div class="credits-content">
+                <h2 class="credits-title">Game Credits</h2>
+                <div class="credits-section">
+                    <h3>Game Design & Development</h3>
+                    <ul class="credits-list">
+                        <li>Game Concept: WHO?</li>
+                        <li>Programming: WHO?</li>
+                        <li>Art & Graphics: WHO?</li>
+                    </ul>
+                </div>
+                
+                <div class="credits-section">
+                    <h3>Special Thanks</h3>
+                    <ul class="credits-list">
+                        <li>Russell</li>
+                        <li>C</li>
+                        <li>Pabon</li>
+                    </ul>
+                </div>
+                
+                <div class="credits-section">
+                    <h3>About the Game</h3>
+                    <p class="credits-text">
+                        Labyrinth is a challenging roguelike adventure where you explore procedurally generated floors. Each floor becomes more difficult with more traps and larger mazes. Can you reach the top?
+                    </p>
+                    <p class="credits-text">
+                        Created with HTML5, CSS3, and JavaScript. This game is brought to you by Russell C. Pabon.
+                    </p>
+                </div>
+                
+                <button class="menu-btn" id="back-btn">BACK TO MENU</button>
+            </div>
+        </div>
+        
+        <!-- Game Elements -->
+        <div id="hud">
+            <div>Steps: <span id="steps">0</span></div>
+            <div>Health: <span id="health">100</span></div>
+        </div>
+        
+        <div id="floor-indicator">
+            Floor: <span id="current-floor">1</span>
+        </div>
+        
+        <div id="maze-container">
+            <div id="maze"></div>
+        </div>
+        
+        <div id="controls">
+            <div class="control-btn invisible"></div>
+            <div class="control-btn" id="up">⬆️</div>
+            <div class="control-btn invisible"></div>
+            <div class="control-btn" id="left">⬅️</div>
+            <div class="control-btn" id="action">⚡</div>
+            <div class="control-btn" id="right">➡️</div>
+            <div class="control-btn invisible"></div>
+            <div class="control-btn" id="down">⬇️</div>
+            <div class="control-btn invisible"></div>
+        </div>
+        
+        <div id="minimap"></div>
+        
+        <div id="message"></div>
+        
+        <div id="game-over">
+            <h1 class="text-4xl font-bold mb-4">Game Over</h1>
+            <p class="text-xl mb-2">You reached floor <span id="final-floor">0</span></p>
+            <p class="text-xl mb-4">Total steps: <span id="final-steps">0</span></p>
+            <button class="btn" id="restart">Play Again</button>
+            <button class="btn mt-4" id="menu-btn">Main Menu</button>
+        </div>
+    </div>
 
-  <script>
-    const cards = ['😘', '😍', '😋', '😉', '🤭', '🥵', '👅', '👉👌'];
-    let flippedCards = [];
-    let matches = 0;
-    let checkingMatch = false; // New variable to track match checking state
+    <script>
+        // Game state
+        const state = {
+            playerX: 1,
+            playerY: 1,
+            playerFloor: 0,
+            playerDirection: 'down', // up, down, left, right
+            steps: 0,
+            health: 100,
+            mazeSize: 15,
+            cellSize: 40,
+            visibilityRadius: 3,
+            maze: {},
+            visited: {},
+            visible: {},
+            isMoving: false,
+            walkingAnimation: false,
+            highestFloor: 0,
+            messageTimeout: null,
+            torches: [],
+            trapTypes: {
+                SPIKE: 5,
+                PIT: 6
+            }
+        };
 
-    function createGame() {
-      const shuffledCards = [...cards, ...cards].sort(() => Math.random() - 0.5);
-      const gameBoard = document.getElementById('game-board');
-      
-      shuffledCards.forEach((emoji, index) => {
-        const card = document.createElement('div');
-        card.className = 'bg-white p-8 text-center text-4xl cursor-pointer rounded-lg shadow-lg hover:bg-blue-100';
-        card.dataset.value = emoji;
-        card.dataset.index = index;
-        card.textContent = '❓';
-        card.addEventListener('click', flipCard);
-        gameBoard.appendChild(card);
-      });
-    }
+        // DOM elements
+        const mazeContainer = document.getElementById('maze-container');
+        const mazeEl = document.getElementById('maze');
+        const stepsEl = document.getElementById('steps');
+        const healthEl = document.getElementById('health');
+        const currentFloorEl = document.getElementById('current-floor');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalFloorEl = document.getElementById('final-floor');
+        const finalStepsEl = document.getElementById('final-steps');
+        const minimapEl = document.getElementById('minimap');
+        const messageEl = document.getElementById('message');
+        const menuScreen = document.getElementById('menu-screen');
+        const creditsScreen = document.getElementById('credits-screen');
 
-    function flipCard(e) {
-      const card = e.target;
+        // Buttons
+        const startBtn = document.getElementById('start-btn');
+        const creditsBtn = document.getElementById('credits-btn');
+        const backBtn = document.getElementById('back-btn');
+        const menuBtn = document.getElementById('menu-btn');
 
-      // Prevent flipping the same card again or if a match check is in progress
-      if (flippedCards.includes(card) || card.style.display === 'none' || checkingMatch) return;
+        // Control buttons
+        const upBtn = document.getElementById('up');
+        const leftBtn = document.getElementById('left');
+        const rightBtn = document.getElementById('right');
+        const downBtn = document.getElementById('down');
+        const actionBtn = document.getElementById('action');
+        const restartBtn = document.getElementById('restart');
 
-      card.textContent = card.dataset.value;
-      flippedCards.push(card);
-      
-      if (flippedCards.length === 2) {
-        checkingMatch = true; // Set the flag to true
-        // Delay the match check to allow the second card to be visible
-        setTimeout(checkMatch, 500);
-      }
-    }
+        // Initialize the game
+        function initGame() {
+            // Reset state
+            state.playerX = 1;
+            state.playerY = 1;
+            state.playerFloor = 0;
+            state.playerDirection = 'down';
+            state.steps = 0;
+            state.health = 100;
+            state.maze = {};
+            state.visited = {};
+            state.visible = {};
+            state.highestFloor = 0;
+            state.torches = [];
+            
+            // Adjust cell size based on screen size
+            adjustCellSize();
+            
+            // Generate first floor
+            generateFloor(0);
+            
+            // Render maze
+            renderMaze();
+            
+            // Update HUD
+            updateHUD();
+            
+            // Set up event listeners
+            setupControls();
+            
+            // Update visibility
+            updateVisibility();
+            
+            // Render minimap
+            renderMinimap();
+            
+            // Show welcome message
+            showMessage("Welcome to the Labyrinth! Beware of traps as you climb!");
+        }
 
-    function checkMatch() {
-      const [card1, card2] = flippedCards;
-      if (card1.dataset.value === card2.dataset.value) {
-        matches++;
-        // Hide matched cards
-        card1.style.display = 'none';
-        card2.style.display = 'none';
-        document.getElementById('score').textContent = `Score: ${matches}`;
-      } else {
-        setTimeout(() => {
-          card1.textContent = '❓';
-          card2.textContent = '❓';
-        }, 1000);
-      }
-      flippedCards = [];
-      checkingMatch = false; // Reset the flag after checking
-    }
+        function adjustCellSize() {
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            
+            // Calculate optimal cell size
+            const maxWidth = screenWidth * 0.8;
+            const maxHeight = screenHeight * 0.6;
+            
+            const cellSizeFromWidth = Math.floor(maxWidth / state.mazeSize);
+            const cellSizeFromHeight = Math.floor(maxHeight / state.mazeSize);
+            
+            state.cellSize = Math.min(cellSizeFromWidth, cellSizeFromHeight);
+            
+            // Ensure minimum cell size
+            state.cellSize = Math.max(20, state.cellSize);
+            
+            // Update container size
+            mazeContainer.style.width = `${state.mazeSize * state.cellSize}px`;
+            mazeContainer.style.height = `${state.mazeSize * state.cellSize}px`;
+        }
 
-    createGame();
-  </script>
+        function generateFloor(floor) {
+            // Initialize maze for this floor if it doesn't exist
+            if (!state.maze[floor]) {
+                state.maze[floor] = [];
+                state.visited[floor] = [];
+                state.visible[floor] = [];
+                
+                // Calculate maze size based on floor (gets bigger as you go up)
+                const floorMazeSize = Math.min(31, state.mazeSize + Math.floor(floor / 3));
+                
+                // Initialize with walls
+                for (let y = 0; y < floorMazeSize; y++) {
+                    state.maze[floor][y] = [];
+                    state.visited[floor][y] = [];
+                    state.visible[floor][y] = [];
+                    
+                    for (let x = 0; x < floorMazeSize; x++) {
+                        state.maze[floor][y][x] = 1; // 1 = wall
+                        state.visited[floor][y][x] = false;
+                        state.visible[floor][y][x] = false;
+                    }
+                }
+                
+                // Create paths using a recursive backtracking algorithm
+                const stack = [];
+                const startX = 1;
+                const startY = 1;
+                state.maze[floor][startY][startX] = 0; // 0 = path
+                stack.push({x: startX, y: startY});
+                
+                while (stack.length > 0) {
+                    const current = stack[stack.length - 1];
+                    const neighbors = getUnvisitedNeighbors(current.x, current.y, floor);
+                    
+                    if (neighbors.length === 0) {
+                        stack.pop();
+                        continue;
+                    }
+                    
+                    const randomIndex = Math.floor(Math.random() * neighbors.length);
+                    const next = neighbors[randomIndex];
+                    
+                    state.maze[floor][next.y][next.x] = 0;
+                    stack.push(next);
+                }
+                
+                // Add stairs up (more stairs on higher floors)
+                const numStairsUp = Math.min(3, 1 + Math.floor(floor / 5));
+                for (let i = 0; i < numStairsUp; i++) {
+                    placeRandomFeature(floor, 3); // 3 = stairs up
+                }
+                
+                // Add stairs down (if not the first floor)
+                if (floor > 0) {
+                    const numStairsDown = Math.min(2, 1 + Math.floor(floor / 10));
+                    for (let i = 0; i < numStairsDown; i++) {
+                        placeRandomFeature(floor, 4); // 4 = stairs down
+                    }
+                }
+                
+                // Add traps (more on higher floors)
+                const numTraps = Math.min(15, 3 + Math.floor(floor * 1.5));
+                for (let i = 0; i < numTraps; i++) {
+                    // Alternate between spike traps and pit traps
+                    const trapType = (i % 2 === 0) ? state.trapTypes.SPIKE : state.trapTypes.PIT;
+                    placeRandomFeature(floor, trapType);
+                }
+                
+                // Add torches to the walls
+                addTorchesToWalls(floor);
+                
+                // Update highest floor reached
+                if (floor > state.highestFloor) {
+                    state.highestFloor = floor;
+                }
+            }
+        }
+        
+        function getUnvisitedNeighbors(x, y, floor) {
+            const neighbors = [];
+            const directions = [
+                {dx: 0, dy: -2}, // North
+                {dx: 2, dy: 0},  // East
+                {dx: 0, dy: 2},  // South
+                {dx: -2, dy: 0}  // West
+            ];
+            
+            const floorMazeSize = state.maze[floor].length;
+            
+            for (const dir of directions) {
+                const nx = x + dir.dx;
+                const ny = y + dir.dy;
+                
+                if (nx >= 0 && nx < floorMazeSize && ny >= 0 && ny < floorMazeSize && state.maze[floor][ny][nx] === 1) {
+                    neighbors.push({x: nx, y: ny});
+                    // Carve path between cells
+                    state.maze[floor][y + dir.dy/2][x + dir.dx/2] = 0;
+                }
+            }
+            
+            return neighbors;
+        }
+        
+        function placeRandomFeature(floor, featureType) {
+            const floorMazeSize = state.maze[floor].length;
+            let placed = false;
+            let attempts = 0;
+            
+            while (!placed && attempts < 100) {
+                const x = Math.floor(Math.random() * (floorMazeSize - 2)) + 1;
+                const y = Math.floor(Math.random() * (floorMazeSize - 2)) + 1;
+                
+                if (state.maze[floor][y][x] === 0) { // Only place on paths
+                    // Don't place on player start position on floor 0
+                    if (!(floor === 0 && x === 1 && y === 1)) {
+                        state.maze[floor][y][x] = featureType;
+                        placed = true;
+                    }
+                }
+                
+                attempts++;
+            }
+        }
+        
+        function addTorchesToWalls(floor) {
+            const floorMazeSize = state.maze[floor].length;
+            state.torches[floor] = [];
+            
+            // Number of torches increases with floor level
+            const numTorches = Math.min(20, 5 + Math.floor(floor / 2));
+            
+            for (let i = 0; i < numTorches; i++) {
+                let placed = false;
+                let attempts = 0;
+                
+                while (!placed && attempts < 50) {
+                    const x = Math.floor(Math.random() * (floorMazeSize - 2)) + 1;
+                    const y = Math.floor(Math.random() * (floorMazeSize - 2)) + 1;
+                    
+                    // Check if this is a wall with at least one adjacent path
+                    if (state.maze[floor][y][x] === 1) {
+                        const hasAdjacentPath = 
+                            (x > 0 && state.maze[floor][y][x-1] === 0) ||
+                            (x < floorMazeSize-1 && state.maze[floor][y][x+1] === 0) ||
+                            (y > 0 && state.maze[floor][y-1][x] === 0) ||
+                            (y < floorMazeSize-1 && state.maze[floor][y+1][x] === 0);
+                        
+                        if (hasAdjacentPath) {
+                            state.torches[floor].push({x, y});
+                            placed = true;
+                        }
+                    }
+                    
+                    attempts++;
+                }
+            }
+        }
+
+        function renderMaze() {
+            // Clear previous maze
+            mazeEl.innerHTML = '';
+            
+            const floorMazeSize = state.maze[state.playerFloor].length;
+            
+            // Set grid size
+            mazeEl.style.gridTemplateColumns = `repeat(${floorMazeSize}, ${state.cellSize}px)`;
+            mazeEl.style.gridTemplateRows = `repeat(${floorMazeSize}, ${state.cellSize}px)`;
+            
+            // Create cells for current floor
+            for (let y = 0; y < floorMazeSize; y++) {
+                for (let x = 0; x < floorMazeSize; x++) {
+                    const cellType = state.maze[state.playerFloor][y][x];
+                    
+                    // Create cell
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = `${state.cellSize}px`;
+                    cell.style.height = `${state.cellSize}px`;
+                    
+                    // Set cell type
+                    if (cellType === 1) {
+                        cell.classList.add('wall');
+                    } else if (cellType === 0) {
+                        cell.classList.add('path');
+                    } else if (cellType === 3) {
+                        cell.classList.add('stairs-up');
+                        cell.innerHTML = '⬆️';
+                    } else if (cellType === 4) {
+                        cell.classList.add('stairs-down');
+                        cell.innerHTML = '⬇️';
+                    } else if (cellType === state.trapTypes.SPIKE) {
+                        cell.classList.add('trap', 'spike-trap');
+                    } else if (cellType === state.trapTypes.PIT) {
+                        cell.classList.add('trap', 'pit-trap');
+                    }
+                    
+                    // Add fog of war
+                    const fog = document.createElement('div');
+                    fog.className = 'fog';
+                    fog.style.width = `${state.cellSize}px`;
+                    fog.style.height = `${state.cellSize}px`;
+                    
+                    if (state.visited[state.playerFloor][y] && state.visited[state.playerFloor][y][x]) {
+                        fog.classList.add('visited');
+                    }
+                    
+                    if (state.visible[state.playerFloor][y] && state.visible[state.playerFloor][y][x]) {
+                        fog.classList.add('visible');
+                    }
+                    
+                    cell.appendChild(fog);
+                    
+                    // Add player if this is player position
+                    if (x === state.playerX && y === state.playerY) {
+                        const player = document.createElement('div');
+                        player.className = 'player';
+                        
+                        // Create player sprite
+                        const playerSprite = document.createElement('div');
+                        playerSprite.className = `player-sprite ${state.walkingAnimation ? 'walking-' + state.playerDirection : ''}`;
+                        
+                        // Rotate player based on direction
+                        if (state.playerDirection === 'up') {
+                            playerSprite.style.transform = 'rotate(0deg)';
+                        } else if (state.playerDirection === 'right') {
+                            playerSprite.style.transform = 'rotate(90deg)';
+                        } else if (state.playerDirection === 'down') {
+                            playerSprite.style.transform = 'rotate(180deg)';
+                        } else if (state.playerDirection === 'left') {
+                            playerSprite.style.transform = 'rotate(270deg)';
+                        }
+                        
+                        // Create player body parts
+                        const playerBody = document.createElement('div');
+                        playerBody.className = 'player-body';
+                        
+                        const playerEyeLeft = document.createElement('div');
+                        playerEyeLeft.className = 'player-eye player-eye-left';
+                        
+                        const playerPupilLeft = document.createElement('div');
+                        playerPupilLeft.className = 'player-pupil';
+                        playerEyeLeft.appendChild(playerPupilLeft);
+                        
+                        const playerEyeRight = document.createElement('div');
+                        playerEyeRight.className = 'player-eye player-eye-right';
+                        
+                        const playerPupilRight = document.createElement('div');
+                        playerPupilRight.className = 'player-pupil';
+                        playerEyeRight.appendChild(playerPupilRight);
+                        
+                        const playerLegLeft = document.createElement('div');
+                        playerLegLeft.className = 'player-leg player-leg-left';
+                        
+                        const playerLegRight = document.createElement('div');
+                        playerLegRight.className = 'player-leg player-leg-right';
+                        
+                        // Assemble player
+                        playerBody.appendChild(playerEyeLeft);
+                        playerBody.appendChild(playerEyeRight);
+                        playerSprite.appendChild(playerBody);
+                        playerSprite.appendChild(playerLegLeft);
+                        playerSprite.appendChild(playerLegRight);
+                        player.appendChild(playerSprite);
+                        
+                        cell.appendChild(player);
+                    }
+                    
+                    mazeEl.appendChild(cell);
+                }
+            }
+            
+            // Add torches
+            if (state.torches[state.playerFloor]) {
+                state.torches[state.playerFloor].forEach(torch => {
+                    if (state.visible[state.playerFloor][torch.y] && state.visible[state.playerFloor][torch.y][torch.x]) {
+                        const torchElement = document.createElement('div');
+                        torchElement.className = 'torch';
+                        torchElement.style.width = `${state.cellSize * 3}px`;
+                        torchElement.style.height = `${state.cellSize * 3}px`;
+                        torchElement.style.left = `${torch.x * state.cellSize - state.cellSize}px`;
+                        torchElement.style.top = `${torch.y * state.cellSize - state.cellSize}px`;
+                        torchElement.style.animation = `flicker ${1 + Math.random()}s infinite`;
+                        mazeEl.appendChild(torchElement);
+                    }
+                });
+            }
+        }
+        
+        function updateVisibility() {
+            const floorMazeSize = state.maze[state.playerFloor].length;
+            
+            // Reset visibility
+            for (let y = 0; y < floorMazeSize; y++) {
+                for (let x = 0; x < floorMazeSize; x++) {
+                    if (state.visible[state.playerFloor][y]) {
+                        state.visible[state.playerFloor][y][x] = false;
+                    }
+                }
+            }
+            
+            // Mark current position as visited and visible
+            state.visited[state.playerFloor][state.playerY][state.playerX] = true;
+            state.visible[state.playerFloor][state.playerY][state.playerX] = true;
+            
+            // Calculate visibility using a simple algorithm
+            for (let dy = -state.visibilityRadius; dy <= state.visibilityRadius; dy++) {
+                for (let dx = -state.visibilityRadius; dx <= state.visibilityRadius; dx++) {
+                    const x = state.playerX + dx;
+                    const y = state.playerY + dy;
+                    
+                    // Check if within bounds
+                    if (x >= 0 && x < floorMazeSize && y >= 0 && y < floorMazeSize) {
+                        // Calculate distance
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance <= state.visibilityRadius) {
+                            // Check if there's a clear line of sight
+                            if (hasLineOfSight(state.playerX, state.playerY, x, y)) {
+                                state.visible[state.playerFloor][y][x] = true;
+                                state.visited[state.playerFloor][y][x] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Update fog of war
+            const cells = mazeEl.querySelectorAll('.cell');
+            for (let y = 0; y < floorMazeSize; y++) {
+                for (let x = 0; x < floorMazeSize; x++) {
+                    const index = y * floorMazeSize + x;
+                    const cell = cells[index];
+                    
+                    if (cell) {
+                        const fog = cell.querySelector('.fog');
+                        
+                        if (fog) {
+                            if (state.visited[state.playerFloor][y][x]) {
+                                fog.classList.add('visited');
+                            }
+                            
+                            if (state.visible[state.playerFloor][y][x]) {
+                                fog.classList.add('visible');
+                            } else {
+                                fog.classList.remove('visible');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        function hasLineOfSight(x0, y0, x1, y1) {
+            // Bresenham's line algorithm to check if there's a wall between two points
+            const dx = Math.abs(x1 - x0);
+            const dy = Math.abs(y1 - y0);
+            const sx = x0 < x1 ? 1 : -1;
+            const sy = y0 < y1 ? 1 : -1;
+            let err = dx - dy;
+            
+            let x = x0;
+            let y = y0;
+            
+            while (true) {
+                // If we've reached the target, we have line of sight
+                if (x === x1 && y === y1) {
+                    return true;
+                }
+                
+                // If we hit a wall, no line of sight
+                if (x !== x0 || y !== y0) { // Skip checking the starting point
+                    if (state.maze[state.playerFloor][y][x] === 1) {
+                        return false;
+                    }
+                }
+                
+                const e2 = 2 * err;
+                if (e2 > -dy) {
+                    if (x === x1) break;
+                    err -= dy;
+                    x += sx;
+                }
+                if (e2 < dx) {
+                    if (y === y1) break;
+                    err += dx;
+                    y += sy;
+                }
+            }
+            
+            return true;
+        }
+        
+        function renderMinimap() {
+            minimapEl.innerHTML = '';
+            
+            const floorMazeSize = state.maze[state.playerFloor].length;
+            
+            // Create minimap grid
+            const minimapGrid = document.createElement('div');
+            minimapGrid.style.display = 'grid';
+            minimapGrid.style.gridTemplateColumns = `repeat(${floorMazeSize}, 4px)`;
+            minimapGrid.style.gridTemplateRows = `repeat(${floorMazeSize}, 4px)`;
+            minimapGrid.style.gap = '1px';
+            
+            // Create cells for current floor
+            for (let y = 0; y < floorMazeSize; y++) {
+                for (let x = 0; x < floorMazeSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'minimap-cell';
+                    
+                    if (!state.visited[state.playerFloor][y][x]) {
+                        cell.classList.add('minimap-unseen');
+                    } else {
+                        const cellType = state.maze[state.playerFloor][y][x];
+                        
+                        if (x === state.playerX && y === state.playerY) {
+                            cell.classList.add('minimap-player');
+                        } else if (cellType === 1) {
+                            cell.classList.add('minimap-wall');
+                        } else if (cellType === 0) {
+                            cell.classList.add('minimap-path');
+                        } else if (cellType === 3) {
+                            cell.classList.add('minimap-stairs-up');
+                        } else if (cellType === 4) {
+                            cell.classList.add('minimap-stairs-down');
+                        } else if (cellType === state.trapTypes.SPIKE || cellType === state.trapTypes.PIT) {
+                            cell.classList.add('minimap-trap');
+                        }
+                    }
+                    
+                    minimapGrid.appendChild(cell);
+                }
+            }
+            
+            minimapEl.appendChild(minimapGrid);
+            
+            // Add floor indicator to minimap
+            const floorText = document.createElement('div');
+            floorText.textContent = `Floor ${state.playerFloor + 1}`;
+            floorText.style.textAlign = 'center';
+            floorText.style.fontSize = '12px';
+            floorText.style.marginTop = '5px';
+            minimapEl.appendChild(floorText);
+        }
+        
+        function updateHUD() {
+            stepsEl.textContent = state.steps;
+            healthEl.textContent = state.health;
+            currentFloorEl.textContent = state.playerFloor + 1;
+        }
+        
+        function setupControls() {
+            // Menu buttons
+            startBtn.addEventListener('click', () => {
+                menuScreen.style.display = 'none';
+                initGame();
+            });
+            
+            creditsBtn.addEventListener('click', () => {
+                creditsScreen.style.display = 'flex';
+            });
+            
+            backBtn.addEventListener('click', () => {
+                creditsScreen.style.display = 'none';
+            });
+            
+            menuBtn.addEventListener('click', () => {
+                gameOverScreen.style.display = 'none';
+                menuScreen.style.display = 'flex';
+            });
+            
+            // Button controls
+            upBtn.addEventListener('click', () => movePlayer(0, -1, 'up'));
+            leftBtn.addEventListener('click', () => movePlayer(-1, 0, 'left'));
+            rightBtn.addEventListener('click', () => movePlayer(1, 0, 'right'));
+            downBtn.addEventListener('click', () => movePlayer(0, 1, 'down'));
+            actionBtn.addEventListener('click', useStairs);
+            
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                        movePlayer(0, -1, 'up');
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                        movePlayer(-1, 0, 'left');
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                        movePlayer(1, 0, 'right');
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                        movePlayer(0, 1, 'down');
+                        break;
+                    case ' ':
+                    case 'Enter':
+                        useStairs();
+                        break;
+                }
+            });
+            
+            // Restart button
+            restartBtn.addEventListener('click', () => {
+                gameOverScreen.style.display = 'none';
+                initGame();
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                adjustCellSize();
+                renderMaze();
+                updateVisibility();
+                renderMinimap();
+            });
+        }
+        
+        function movePlayer(dx, dy, direction) {
+            if (state.isMoving) return;
+            
+            // Update player direction
+            state.playerDirection = direction;
+            
+            const floorMazeSize = state.maze[state.playerFloor].length;
+            const newX = state.playerX + dx;
+            const newY = state.playerY + dy;
+            
+            // Check if move is valid
+            if (newX >= 0 && newX < floorMazeSize && newY >= 0 && newY < floorMazeSize) {
+                const cellType = state.maze[state.playerFloor][newY][newX];
+                
+                if (cellType !== 1) { // Not a wall
+                    state.isMoving = true;
+                    state.walkingAnimation = true;
+                    
+                    // Update player position
+                    state.playerX = newX;
+                    state.playerY = newY;
+                    state.steps++;
+                    
+                    // Check for traps
+                    if (cellType === state.trapTypes.SPIKE) {
+                        // Spike trap does damage but doesn't disappear
+                        const damage = 10 + Math.floor(state.playerFloor / 2);
+                        state.health -= damage;
+                        showMessage(`Ouch! Spike trap! -${damage} health`);
+                        flashDamage();
+                        
+                        if (state.health <= 0) {
+                            gameOver();
+                            return;
+                        }
+                    } else if (cellType === state.trapTypes.PIT) {
+                        // Pit trap does damage and player falls to previous floor
+                        const damage = 15 + Math.floor(state.playerFloor / 2);
+                        state.health -= damage;
+                        showMessage(`You fell into a pit! -${damage} health`);
+                        flashDamage();
+                        
+                        if (state.health <= 0) {
+                            gameOver();
+                            return;
+                        }
+                        
+                        // Fall to previous floor if not on floor 0
+                        if (state.playerFloor > 0) {
+                            state.playerFloor--;
+                            
+                            // Find a random path on the previous floor
+                            const prevFloorMazeSize = state.maze[state.playerFloor].length;
+                            let foundSpot = false;
+                            let attempts = 0;
+                            
+                            while (!foundSpot && attempts < 100) {
+                                const randX = Math.floor(Math.random() * (prevFloorMazeSize - 2)) + 1;
+                                const randY = Math.floor(Math.random() * (prevFloorMazeSize - 2)) + 1;
+                                
+                                if (state.maze[state.playerFloor][randY][randX] === 0) {
+                                    state.playerX = randX;
+                                    state.playerY = randY;
+                                    foundSpot = true;
+                                }
+                                
+                                attempts++;
+                            }
+                            
+                            // If no spot found, place at center
+                            if (!foundSpot) {
+                                state.playerX = Math.floor(prevFloorMazeSize / 2);
+                                state.playerY = Math.floor(prevFloorMazeSize / 2);
+                            }
+                            
+                            showMessage(`You fell down to floor ${state.playerFloor + 1}!`);
+                        }
+                        
+                        // Remove the pit trap
+                        state.maze[state.playerFloor][state.playerY][state.playerX] = 0;
+                    }
+                    
+                    // Update HUD
+                    updateHUD();
+                    
+                    // Re-render maze
+                    renderMaze();
+                    
+                    // Update visibility
+                    updateVisibility();
+                    
+                    // Update minimap
+                    renderMinimap();
+                    
+                    // Stop walking animation after a short delay
+                    setTimeout(() => {
+                        state.walkingAnimation = false;
+                        renderMaze();
+                        state.isMoving = false;
+                    }, 200);
+                }
+            }
+        }
+        
+        function useStairs() {
+            if (state.isMoving) return;
+            
+            const cellType = state.maze[state.playerFloor][state.playerY][state.playerX];
+            
+            if (cellType === 3) { // Stairs up
+                // Generate next floor if it doesn't exist
+                const nextFloor = state.playerFloor + 1;
+                generateFloor(nextFloor);
+                
+                // Find a stairs down on the next floor
+                const floorMazeSize = state.maze[nextFloor].length;
+                let stairsFound = false;
+                
+                for (let y = 0; y < floorMazeSize && !stairsFound; y++) {
+                    for (let x = 0; x < floorMazeSize && !stairsFound; x++) {
+                        if (state.maze[nextFloor][y][x] === 4) { // Stairs down
+                            state.playerX = x;
+                            state.playerY = y;
+                            state.playerFloor = nextFloor;
+                            stairsFound = true;
+                        }
+                    }
+                }
+                
+                // If no stairs found (shouldn't happen), place player at center
+                if (!stairsFound) {
+                    state.playerX = Math.floor(floorMazeSize / 2);
+                    state.playerY = Math.floor(floorMazeSize / 2);
+                    state.playerFloor = nextFloor;
+                }
+                
+                // Show message for new floor
+                showMessage(`You ascended to floor ${state.playerFloor + 1}! The Labyrinth gets more dangerous...`);
+                
+                // Update game
+                updateHUD();
+                renderMaze();
+                updateVisibility();
+                renderMinimap();
+                
+                // Apply floor difficulty effects
+                applyFloorEffects();
+                
+            } else if (cellType === 4) { // Stairs down
+                state.playerFloor--;
+                
+                // Find a stairs up on the previous floor
+                const floorMazeSize = state.maze[state.playerFloor].length;
+                let stairsFound = false;
+                
+                for (let y = 0; y < floorMazeSize && !stairsFound; y++) {
+                    for (let x = 0; x < floorMazeSize && !stairsFound; x++) {
+                        if (state.maze[state.playerFloor][y][x] === 3) { // Stairs up
+                            state.playerX = x;
+                            state.playerY = y;
+                            stairsFound = true;
+                        }
+                    }
+                }
+                
+                // If no stairs found (shouldn't happen), place player at center
+                if (!stairsFound) {
+                    state.playerX = Math.floor(floorMazeSize / 2);
+                    state.playerY = Math.floor(floorMazeSize / 2);
+                }
+                
+                showMessage(`You descended to floor ${state.playerFloor + 1}.`);
+                
+                // Update game
+                updateHUD();
+                renderMaze();
+                updateVisibility();
+                renderMinimap();
+            }
+        }
+        
+        function applyFloorEffects() {
+            // Make the game harder as player climbs higher
+            
+            // Reduce visibility on higher floors
+            state.visibilityRadius = Math.max(2, 3 - Math.floor(state.playerFloor / 10));
+            
+            // Apply damage on very high floors (environmental hazard)
+            if (state.playerFloor > 15) {
+                const damage = Math.floor(state.playerFloor / 10);
+                state.health -= damage;
+                showMessage(`The air is toxic here. You take ${damage} damage!`);
+                flashDamage();
+                
+                if (state.health <= 0) {
+                    gameOver();
+                }
+                
+                updateHUD();
+            }
+        }
+        
+        function flashDamage() {
+            // Create a full-screen flash effect
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.top = '0';
+            flash.style.left = '0';
+            flash.style.width = '100%';
+            flash.style.height = '100%';
+            flash.style.pointerEvents = 'none';
+            flash.style.zIndex = '150';
+            flash.classList.add('damage-flash');
+            
+            document.body.appendChild(flash);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                document.body.removeChild(flash);
+            }, 500);
+        }
+        
+        function showMessage(text) {
+            // Clear any existing timeout
+            if (state.messageTimeout) {
+                clearTimeout(state.messageTimeout);
+            }
+            
+            // Set message text
+            messageEl.textContent = text;
+            messageEl.classList.add('show-message');
+            
+            // Hide message after a delay
+            state.messageTimeout = setTimeout(() => {
+                messageEl.classList.remove('show-message');
+            }, 3000);
+        }
+        
+        function gameOver() {
+            finalFloorEl.textContent = state.playerFloor + 1;
+            finalStepsEl.textContent = state.steps;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Initialize menu controls
+        setupControls();
+    </script>
 </body>
 </html>
